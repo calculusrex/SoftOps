@@ -1,0 +1,90 @@
+import bpy
+import functools as ft
+
+import sys
+dev_path = '/home/feral/addon_workshop/softops'
+sys.path.insert(1, dev_path)
+
+
+from bezier.tensor_matrix import interpolate_tensor_matrix
+from bezier.tensor_matrix import tensor_matrix__from_active, tensor_matrix__interpolate_missing__rows
+
+
+def PS__from_tensor_panel(tensor_panel):
+    A, B = tensor_panel[0]
+    C, D = tensor_panel[1]
+    _, p1, h1 = A[1]
+    h2, p2, _ = B[1]
+    P1 = p1, h1, h2, p2
+
+    _, p1, h1 = A[2]
+    h2, p2, _ = B[2]
+    H1 = p1, h1, h2, p2
+
+    _, p1, h1 = C[0]
+    h2, p2, _ = D[0]
+    H2 = p1, h1, h2, p2
+
+    _, p1, h1 = C[1]
+    h2, p2, _ = D[1]
+    P2 = p1, h1, h2, p2
+
+    return P1, H1, H2, P2
+
+
+
+def tensor_panel_strips(tensor_matrix, longitudinally_cyclic=False, transversally_cyclic=False):
+    return list(map(lambda strip: list(zip(*strip)),
+                    overlapping_pairs(
+                        list(map(lambda row: overlapping_pairs(row, cyclic=longitudinally_cyclic),
+                                 tensor_matrix)),
+                        cyclic=transversally_cyclic)))
+
+
+def handle_matrix__from_tensor_matrix(tensor_matrix,
+                                      longitudinally_cyclic=False, transversally_cyclic=False):
+    tensor_panelss = tensor_panel_strips(tensor_matrix,
+                                         longitudinally_cyclic=longitudinally_cyclic,
+                                         transversally_cyclic=transversally_cyclic)
+    return list(
+        map(lambda strip: list(map(lambda tensor_panel: PS__from_tensor_panel(tensor_panel), strip)),
+            tensor_panelss))
+
+
+
+
+tensor_matrix__interpolate_missing__longitudinally = tensor_matrix__interpolate_missing__rows
+
+def interpolated_handle_matrix__from_tensor_matrix(tensor_matrix,
+                                                   longitudinally_cyclic=False,
+                                                   transversally_cyclic=False):
+    tensor_matrix = interpolate_tensor_matrix(
+        tensor_matrix,
+        longitudinally_cyclic=longitudinally_cyclic,
+        transversally_cyclic=transversally_cyclic)
+
+    # tensor_matrix = tensor_matrix__align_tensors(tensor_matrix)
+
+    return handle_matrix__from_tensor_matrix(tensor_matrix,
+                                             longitudinally_cyclic=longitudinally_cyclic,
+                                             transversally_cyclic=transversally_cyclic)
+
+
+
+def handle_matrix__from_active(context, longitudinally_cyclic=False, transversally_cyclic=False):
+    return interpolated_handle_matrix__from_tensor_matrix(
+        tensor_matrix__from_active(context),
+        longitudinally_cyclic=longitudinally_cyclic,
+        transversally_cyclic=transversally_cyclic)
+
+
+
+# def handle_matrix__from_active(context, longitudinally_cyclic=False, transversally_cyclic=False):
+#     return handle_matrix__from_tensor_matrix(
+#         tensor_matrix__interpolate_missing__longitudinally(tensor_matrix__from_active(context)),
+#         longitudinally_cyclic=longitudinally_cyclic,
+#         transversally_cyclic=transversally_cyclic)
+
+
+
+

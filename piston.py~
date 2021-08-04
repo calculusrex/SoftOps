@@ -1,0 +1,8 @@
+import bpy
+from mathutils import Vector
+
+import sys
+dev_path = '/home/feral/engineering/addon_workshop/softops'
+sys.path.insert(1, dev_path)
+
+from rename import other_side, uncoil__bone_name, coil__bone_name

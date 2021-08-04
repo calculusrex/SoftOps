@@ -1,0 +1,67 @@
+import bpy
+import functools as ft
+
+
+import sys
+dev_path = '/home/feral/engineering/addon_workshop/softops'
+sys.path.insert(1, dev_path)
+
+from rename import uncoil__bone_name, coil__bone_name, side__bone_name
+from edit_bones import select_n_set_active__edit_bone
+
+
+def deselect_all():
+    bpy.ops.armature.select_all(action='DESELECT')
+
+def is_selection_bilateral(context):
+    return side__bone_name(context.active_bone.name) != None
+
+
+def install__stretch_to__target(context):
+    active_side = side__bone_name(context.active_bone.name)
+
+    muscle = context.active_bone
+    insertion_parent = list(
+        filter(lambda bone: side__bone_name(bone.name) == active_side,
+               context.selected_bones))[0]
+
+    armature = context.active_object.data
+
+    insertion_name_data = uncoil__bone_name(muscle.name)
+    insertion_name_data['pres'] = ['MCH']
+    insertion_name_data['sufs'] = ['insertion']
+    insertion_name = coil__bone_name(insertion_name_data)
+    
+    insertion = armature.edit_bones.new(insertion_name)
+
+    insertion.head = muscle.tail
+    insertion.tail = muscle.tail + (insertion_parent.vector / 10)
+    insertion.align_roll(insertion_parent.z_axis)
+    insertion.parent = insertion_parent
+
+
+
+
+if __name__ == '__main__':
+    print()
+    
+    context = bpy.context
+
+    # selected_bones = context.selected_bones
+    # active_bone = context.active_bone
+
+    
+    # active_side = side__bone_name(active_bone.name)
+    # print('active_side:', active_side)
+
+    # bilateral_selection_bool = is_selection_bilateral(context)
+    # print('bilateral_selection_bool:', bilateral_selection_bool)
+    
+    # for bone in selected_bones:
+    #     print(bone.name)
+
+
+
+    install__stretch_to__target(context)
+    # deselect_all()
+    

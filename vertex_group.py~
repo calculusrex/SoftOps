@@ -1,0 +1,9 @@
+import bpy
+
+
+if __name__ == '__main__':
+    print('\n', 'vertex_group.py', '\n')
+
+    context = bpy.context
+
+    print(context.active_pose_bone.name)
